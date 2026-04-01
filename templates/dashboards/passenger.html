@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings — JetPulse{% endblock %}
+
+{% block extra_css %}
+<style>
+.booking-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.booking-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+.booking-card.cancelled {
+    opacity: 0.6;
+    border-color: rgba(239,68,68,0.2);
+}
+
+.card-top-strip {
+    height: 4px;
+    background: linear-gradient(90deg, #6366f1, #ec4899);
+}
+.card-top-strip.cancelled-strip {
+    background: linear-gradient(90deg, #ef4444, #b91c1c);
+}
+
+.card-body { padding: 2rem 2.5rem; display: grid; grid-template-columns: 2fr 1fr; gap: 3rem; }
+
+.route-cols { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.75rem; }
+.col-city { flex: 1; }
+.city-iata { font-size: 2.2rem; font-weight: 800; color: white; line-height: 1; }
+.city-label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: 0.2rem; }
+
+.info-pills { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+}
+.pill.primary { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.2); color: #818cf8; }
+
+.divider-v { border-left: 1px dashed var(--glass-border); padding-left: 3rem; display: flex; flex-direction: column; justify-content: space-between; }
+
+.seat-big {
+    font-size: 3rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1;
+    text-align: center;
+}
+.seat-sub { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); text-align: center; margin-bottom: 1.75rem; }
+
+.card-actions { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.badge-confirmed { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.25); }
+.badge-cancelled { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.25); }
+
+.cancel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid rgba(239,68,68,0.3);
+    background: rgba(239,68,68,0.05);
+    color: #f87171;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    text-decoration: none;
+}
+.cancel-btn:hover {
+    background: rgba(239,68,68,0.15);
+    border-color: rgba(239,68,68,0.5);
+    color: #ef4444;
+}
+
+.delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.02);
+    color: var(--text-secondary);
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+.delete-btn:hover {
+    background: rgba(239,68,68,0.1);
+    border-color: rgba(239,68,68,0.3);
+    color: #f87171;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.modal-overlay.active { display: flex; }
+.modal-box {
+    background: #1e1b4b;
+    border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 24px;
+    padding: 2.5rem;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    animation: popIn 0.3s ease;
+}
+@keyframes popIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 4rem 10%;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+        <div>
+            <h1>My <span style="background: linear-gradient(to right, #6366f1, #ec4899); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Bookings</span></h1>
+            <p style="color: var(--text-secondary);">Manage your travel plans and boarding passes.</p>
+        </div>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+            <i data-lucide="plus" style="height: 18px; width: 18px;"></i> Book a Flight
+        </a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        {% if bookings %}
+            {% for booking in bookings %}
+                <div class="booking-card {% if booking.status == 'cancelled' %}cancelled{% endif %}">
+                    <div class="card-top-strip {% if booking.status == 'cancelled' %}cancelled-strip{% endif %}"></div>
+                    <div class="card-body">
+                        <!-- Left: Flight Details -->
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+                                <div>
+                                    <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.4rem;">Booking Reference</div>
+                                    <div style="font-size: 1.1rem; font-weight: 700; letter-spacing: 3px; color: white;">{{ booking.booking_reference }}</div>
+                                </div>
+                                <span class="status-badge {% if booking.status == 'confirmed' %}badge-confirmed{% else %}badge-cancelled{% endif %}">
+                                    ● {{ booking.status.capitalize() }}
+                                </span>
+                            </div>
+
+                            <div class="route-cols">
+                                <div class="col-city">
+                                    <div class="city-iata">{{ booking.flight.source[:3].upper() }}</div>
+                                    <div class="city-label">{{ booking.flight.source }}</div>
+                                </div>
+                                <div style="opacity: 0.3; color: var(--primary);">
+                                    <i data-lucide="plane" style="width: 28px; height: 28px;"></i>
+                                </div>
+                                <div class="col-city" style="text-align: right;">
+                                    <div class="city-iata">{{ booking.flight.destination[:3].upper() }}</div>
+                                    <div class="city-label">{{ booking.flight.destination }}</div>
+                                </div>
+                            </div>
+
+                            <div class="info-pills">
+                                <span class="pill primary"><i data-lucide="plane" style="height: 12px; width: 12px;"></i> {{ booking.flight.flight_number }}</span>
+                                <span class="pill"><i data-lucide="calendar" style="height: 12px; width: 12px;"></i> {{ booking.flight.departure_time.strftime('%d %b %Y') }}</span>
+                                <span class="pill"><i data-lucide="clock" style="height: 12px; width: 12px;"></i> {{ booking.flight.departure_time.strftime('%H:%M') }}</span>
+                                <span class="pill">
+                                    {% if booking.seat_class == 'First Class' %}👑{% elif booking.seat_class == 'Business' %}💺{% else %}🪑{% endif %}
+                                    {{ booking.seat_class or 'Economy' }}
+                                </span>
+                                <span class="pill">🍽️ {{ booking.meal_preference or 'Standard' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Right: Seat + Actions -->
+                        <div class="divider-v">
+                            <div>
+                                <div style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-secondary); text-align: center; margin-bottom: 0.5rem;">Seat</div>
+                                <div class="seat-big">{{ booking.seat_number }}</div>
+                                <div class="seat-sub">{{ booking.seat_class or 'Economy' }}</div>
+                            </div>
+                            <div class="card-actions">
+                                {% if booking.status == 'confirmed' %}
+                                    <a href="{{ url_for('passenger.view_ticket', booking_id=booking.id) }}" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.65rem 1rem; text-align: center; justify-content: center; display: flex; gap: 0.5rem; align-items: center;">
+                                        <i data-lucide="ticket" style="height: 16px; width: 16px;"></i> View Ticket
+                                    </a>
+                                    <button class="cancel-btn" onclick="openCancelModal('{{ booking.id }}', '{{ booking.booking_reference }}')">
+                                        <i data-lucide="x-circle" style="height: 14px; width: 14px;"></i> Cancel Booking
+                                    </button>
+                                {% else %}
+                                    <div style="text-align: center; color: var(--text-secondary); font-size: 0.8rem; padding: 0.5rem 0;">
+                                        <i data-lucide="ban" style="height: 18px; width: 18px; display: block; margin: 0 auto 0.4rem; opacity: 0.5;"></i>
+                                        Booking Cancelled
+                                    </div>
+                                    <button class="delete-btn" onclick="openDeleteModal('{{ booking.id }}', '{{ booking.booking_reference }}')">
+                                        <i data-lucide="trash-2" style="height: 14px; width: 14px;"></i> Clear from History
+                                    </button>
+                                {% endif %}
+
+                                {% if booking.status == 'confirmed' %}
+                                    <a href="{{ url_for('passenger.add_baggage', booking_id=booking.id) }}" class="cancel-btn" style="border-color: rgba(99,102,241,0.3); color: #818cf8; background: rgba(99,102,241,0.05);">
+                                        <i data-lucide="briefcase" style="height: 14px; width: 14px;"></i> Add Baggage
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="text-align: center; padding: 8rem;" class="card glass">
+                <i data-lucide="calendar-off" style="width: 64px; height: 64px; color: var(--text-secondary); opacity: 0.15; margin-bottom: 2rem; display: block; margin-inline: auto;"></i>
+                <h2 style="margin-bottom: 1rem;">No Upcoming Flights</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 3rem; max-width: 400px; margin-inline: auto;">Start your journey by exploring our global network of elite routes.</p>
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary">Find a Flight</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<div class="modal-overlay" id="cancelModal">
+    <div class="modal-box">
+        <div style="width: 60px; height: 60px; background: rgba(239,68,68,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+            <i data-lucide="alert-triangle" style="width: 28px; height: 28px; color: #ef4444;"></i>
+        </div>
+        <h3 style="margin-bottom: 0.75rem;">Cancel Booking?</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem;">Are you sure you want to cancel booking</p>
+        <p style="font-weight: 800; font-size: 1.1rem; letter-spacing: 3px; margin-bottom: 2rem;" id="modalRef">—</p>
+        <p style="color: #f87171; font-size: 0.8rem; margin-bottom: 2rem;">This action cannot be undone.</p>
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="closeCancelModal()" class="btn btn-secondary" style="flex: 1;">Keep Booking</button>
+            <form id="cancelForm" method="POST" style="flex: 1;">
+                <button type="submit" class="btn" style="width: 100%; background: rgba(239,68,68,0.2); border: 1px solid rgba(239,68,68,0.4); color: #ef4444;">Yes, Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-box">
+        <div style="width: 60px; height: 60px; background: rgba(239,68,68,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+            <i data-lucide="trash-2" style="width: 28px; height: 28px; color: #ef4444;"></i>
+        </div>
+        <h3 style="margin-bottom: 0.75rem;">Clear History?</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem;">Permanently remove record</p>
+        <p style="font-weight: 800; font-size: 1.1rem; letter-spacing: 3px; margin-bottom: 2rem;" id="deleteModalRef">—</p>
+        <div style="display: flex; gap: 1rem;">
+            <button onclick="closeDeleteModal()" class="btn btn-secondary" style="flex: 1;">Keep Record</button>
+            <form id="deleteForm" method="POST" style="flex: 1;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; background: #ef4444; border-color: #ef4444;">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openCancelModal(bookingId, ref) {
+    document.getElementById('modalRef').textContent = ref;
+    document.getElementById('cancelForm').action = '/passenger/cancel/' + bookingId;
+    document.getElementById('cancelModal').classList.add('active');
+}
+function closeCancelModal() {
+    document.getElementById('cancelModal').classList.remove('active');
+}
+
+function openDeleteModal(bookingId, ref) {
+    document.getElementById('deleteModalRef').textContent = ref;
+    document.getElementById('deleteForm').action = '/passenger/delete/' + bookingId;
+    document.getElementById('deleteModal').classList.add('active');
+}
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+}
+
+// Close modals on clicking overlay
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeCancelModal();
+            closeDeleteModal();
+        }
+    });
+});
+</script>
+{% endblock %}

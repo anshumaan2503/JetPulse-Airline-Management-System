@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Secure Payment — JetPulse{% endblock %}
+
+{% block extra_css %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<style>
+    .payment-container {
+        max-width: 500px;
+        margin: 5rem auto;
+        padding: 2.5rem;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        text-align: center;
+    }
+    .payment-header {
+        margin-bottom: 2rem;
+    }
+    .price-tag {
+        font-size: 3rem;
+        font-weight: 800;
+        color: white;
+        margin: 1rem 0;
+    }
+    .secure-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 2rem;
+    }
+    .btn-pay {
+        background: var(--primary);
+        color: white;
+        width: 100%;
+        padding: 1rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+    }
+    .btn-pay:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+    }
+    #loading-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(8px);
+        z-index: 9999;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255,255,255,0.1);
+        border-left-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="loading-overlay">
+    <div class="spinner"></div>
+    <p id="loading-text">Verifying Payment...</p>
+</div>
+
+<div class="payment-container">
+    <div class="payment-header">
+        <div class="secure-badge">
+            <i data-lucide="shield-check" style="width: 16px;"></i> SSL SECURE CHECKOUT
+        </div>
+        <h1 style="font-size: 1.5rem;">Complete Your Booking</h1>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">Flight {{ booking.flight.flight_number }} | {{ booking.seat_class }}</p>
+    </div>
+
+    <div class="price-tag">₹{{ price }}</div>
+    
+    <div style="text-align: left; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 16px; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="color: var(--text-secondary);">Passenger</span>
+            <span style="font-weight: 600;">{{ booking.passenger.name }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+            <span style="color: var(--text-secondary);">Seat</span>
+            <span style="font-weight: 600;">{{ booking.seat_number }}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-secondary);">Reference</span>
+            <span style="font-weight: 600;">{{ booking.booking_reference }}</span>
+        </div>
+    </div>
+
+    <button id="rzp-button1" class="btn-pay">Pay Now via Razorpay</button>
+    
+    <p style="margin-top: 1.5rem; font-size: 0.75rem; color: var(--text-secondary);">
+        By clicking "Pay Now", you agree to our Terms of Service.<br>
+        Payments are securely processed via Razorpay.
+    </p>
+
+    <div style="margin-top: 2rem; display: flex; justify-content: center; gap: 1rem; opacity: 0.5;">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" height="20" alt="UPI">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" height="15" alt="Visa">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" height="20" alt="Mastercard">
+    </div>
+</div>
+
+<script>
+    var options = {
+        "key": "{{ key_id }}", 
+        "amount": "{{ order.amount }}", 
+        "currency": "INR",
+        "name": "JetPulse Airlines",
+        "description": "Flight Booking - {{ booking.booking_reference }}",
+        "image": "/static/images/logo.png",
+        "order_id": "{{ order.id }}", 
+        "handler": function (response){
+            // This function runs when payment is successful
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            // Send data to our server for verification
+            fetch("{{ url_for('passenger.verify_payment') }}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature,
+                    booking_id: "{{ booking.id }}"
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    window.location.href = "{{ url_for('passenger.view_ticket', booking_id=booking.id) }}";
+                } else {
+                    alert("Payment verification failed. Please contact support.");
+                    location.reload();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("An error occurred during verification.");
+                location.reload();
+            });
+        },
+        "prefill": {
+            "name": "{{ booking.passenger.name }}",
+            "email": "{{ current_user.email }}",
+            "contact": "9999999999"
+        },
+        "notes": {
+            "address": "JetPulse HQ, Mumbai"
+        },
+        "theme": {
+            "color": "#6366f1"
+        }
+    };
+    var rzp1 = new Razorpay(options);
+    document.getElementById('rzp-button1').onclick = function(e){
+        rzp1.open();
+        e.preventDefault();
+    }
+</script>
+{% endblock %}

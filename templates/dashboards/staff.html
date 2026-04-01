@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 4rem 5%;">
+    <h1 style="margin-bottom: 1rem;">Staff Portal</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 3rem;">Welcome back, {{ current_user.username }}. Your assigned duties for today.</p>
+
+    <div class="grid">
+        {% if assignments %}
+            {% for assignment in assignments %}
+                <div class="card glass">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                        <span style="font-size: 0.8rem; background: var(--primary); padding: 0.2rem 0.6rem; border-radius: 20px;">Flight: {{ assignment.flight.flight_number }}</span>
+                        <span style="color: var(--secondary); font-weight: 600;">Role: {{ assignment.role }}</span>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <h3 style="margin: 0; font-size: 1.25rem;">{{ assignment.flight.source }} TO {{ assignment.flight.destination }}</h3>
+                        <p style="color: var(--text-secondary);">Aircraft: {{ assignment.flight.aircraft.model }}</p>
+                    </div>
+                    <div style="display: flex; gap: 1.5rem; font-size: 0.9rem; color: #94a3b8;">
+                        <p><i data-lucide="clock" style="height: 14px; width: 14px;"></i> Dep: {{ assignment.flight.departure_time.strftime('%H:%M') }}</p>
+                        <p><i data-lucide="plane-takeoff" style="height: 14px; width: 14px;"></i> Status: {{ assignment.flight.status.capitalize() }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem; background: var(--glass); border-radius: 20px;">
+                <p style="color: var(--text-secondary);">No active assignments found for today. Enjoy your day off or check back later.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}Boarding Pass — {{ booking.booking_reference }} | JetPulse{% endblock %}
+
+{% block extra_css %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Libre+Barcode+128&display=swap');
+
+.ticket-page {
+    padding: 60px 20px;
+    background: #f1f5f9;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+}
+
+.boarding-pass {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+/* Header */
+.pass-header {
+    background: #1e293b;
+    color: white;
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.brand { font-weight: 800; font-size: 1.1rem; letter-spacing: 1px; }
+.class-tag { font-weight: 600; font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; }
+
+/* Main Content */
+.pass-main {
+    flex: 1;
+    border-right: 2px dashed #e2e8f0;
+    position: relative;
+}
+
+.pass-body { padding: 40px; }
+
+.route-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+}
+.iata { font-size: 3.5rem; font-weight: 800; color: #0f172a; margin: 0; line-height: 1; }
+.city { font-size: 0.85rem; color: #64748b; font-weight: 500; margin-top: 4px; }
+
+.plane-divider {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    padding: 0 20px;
+}
+.plane-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #f1f5f9;
+}
+.plane-divider i {
+    background: white;
+    padding: 0 10px;
+    position: relative;
+    z-index: 1;
+    color: #6366f1;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+}
+.detail-item label { display: block; font-size: 0.65rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+.detail-item span { display: block; font-size: 1.1rem; font-weight: 600; color: #1e293b; }
+
+/* Stub */
+.pass-stub {
+    width: 280px;
+    background: #f8fafc;
+    padding: 40px;
+}
+.stub-header { font-size: 0.7rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 24px; }
+
+.stub-row { margin-bottom: 20px; }
+.stub-row label { display: block; font-size: 0.6rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 4px; }
+.stub-row span { font-size: 1rem; font-weight: 600; color: #1e293b; }
+
+.seat-display {
+    margin-top: 30px;
+    background: #1e293b;
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+.seat-display .num { font-size: 2.5rem; font-weight: 800; display: block; line-height: 1; }
+.seat-display .lab { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; margin-top: 4px; opacity: 0.6; }
+
+.barcode {
+    margin-top: 40px;
+    font-family: 'Libre Barcode 128', cursive;
+    font-size: 4rem;
+    text-align: center;
+    color: #1e293b;
+}
+
+@media print {
+    .ticket-page { background: white !important; padding: 0 !important; }
+    .boarding-pass { box-shadow: none !important; border: 1px solid #eee !important; }
+    .ticket-actions, .nav-links, footer { display: none !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ticket-page">
+    <div class="boarding-pass">
+        <div class="pass-main">
+            <div class="pass-header">
+                <div class="brand">JETPULSE</div>
+                <div class="class-tag">{{ booking.seat_class }}</div>
+            </div>
+            
+            <div class="pass-body">
+                <div class="route-section">
+                    <div>
+                        <h1 class="iata">{{ booking.flight.source[:3].upper() }}</h1>
+                        <div class="city">{{ booking.flight.source }}</div>
+                    </div>
+                    <div class="plane-divider">
+                        <i data-lucide="plane" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <h1 class="iata">{{ booking.flight.destination[:3].upper() }}</h1>
+                        <div class="city">{{ booking.flight.destination }}</div>
+                    </div>
+                </div>
+
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <label>Passenger</label>
+                        <span>{{ booking.passenger.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Flight</label>
+                        <span>{{ booking.flight.flight_number }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Date</label>
+                        <span>{{ booking.flight.departure_time.strftime('%d %b %Y') }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Departure</label>
+                        <span>{{ booking.flight.departure_time.strftime('%H:%M') }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Gate</label>
+                        <span>B-14</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>Seat</label>
+                        <span style="color: #6366f1;">{{ booking.seat_number }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pass-stub">
+            <div class="stub-header">Passenger Receipt</div>
+            
+            <div class="stub-row">
+                <label>Passenger</label>
+                <span>{{ booking.passenger.name }}</span>
+            </div>
+            <div class="stub-row">
+                <label>Flight & Date</label>
+                <span>{{ booking.flight.flight_number }} / {{ booking.flight.departure_time.strftime('%d %b') }}</span>
+            </div>
+            <div class="stub-row">
+                <label>Route</label>
+                <span>{{ booking.flight.source[:3].upper() }} > {{ booking.flight.destination[:3].upper() }}</span>
+            </div>
+
+            <div class="seat-display">
+                <span class="num">{{ booking.seat_number }}</span>
+                <span class="lab">Seat</span>
+            </div>
+
+            <div class="barcode">{{ booking.booking_reference }}</div>
+        </div>
+    </div>
+
+    <div class="ticket-actions" style="max-width: 900px; margin: 40px auto 0; display: flex; gap: 16px;">
+        <button onclick="window.print()" class="btn btn-primary" style="flex: 1; justify-content: center;">
+            <i data-lucide="printer" style="width: 18px; height: 18px; margin-right: 8px;"></i> Print Pass
+        </button>
+        <a href="{{ url_for('passenger.dashboard') }}" class="btn btn-secondary" style="flex: 1; justify-content: center; text-decoration: none; display: flex; align-items: center;">
+            <i data-lucide="arrow-left" style="width: 18px; height: 18px; margin-right: 8px;"></i> Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

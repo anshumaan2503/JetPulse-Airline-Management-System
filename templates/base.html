@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}JetPulse Airline{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="glass">
+        <a href="{{ url_for('main.index') }}" class="logo">
+            <span style="font-weight: 800;">JET</span>PULSE
+        </a>
+        <div class="nav-links">
+            <a href="{{ url_for('main.index') }}">Flights</a>
+            <a href="{{ url_for('main.project_overview') }}">System Architecture</a>
+            {% if current_user.is_authenticated %}
+                {% if current_user.role == 'admin' %}
+                    <a href="{{ url_for('admin.dashboard') }}">Admin Panel</a>
+                {% elif current_user.role == 'staff' %}
+                    <a href="{{ url_for('staff.dashboard') }}">Staff Portal</a>
+                {% else %}
+                    <a href="{{ url_for('passenger.dashboard') }}">My Bookings</a>
+                {% endif %}
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Logout</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Login</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="padding: 0.5rem 1rem;">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="content-wrapper">
+        <!-- Flash Messages -->
+        <div style="padding: 0 5%; margin-top: 1rem;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% if category == 'success' %}
+                            <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.35); padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 0.75rem; color: #34d399; font-size: 0.9rem; font-weight: 500;">
+                                <span style="font-size: 1.1rem;">✅</span> {{ message }}
+                            </div>
+                        {% elif category == 'danger' or category == 'error' %}
+                            <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.35); padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 0.75rem; color: #f87171; font-size: 0.9rem; font-weight: 500;">
+                                <span style="font-size: 1.1rem;">❌</span> {{ message }}
+                            </div>
+                        {% elif category == 'warning' %}
+                            <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.35); padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 0.75rem; color: #fbbf24; font-size: 0.9rem; font-weight: 500;">
+                                <span style="font-size: 1.1rem;">⚠️</span> {{ message }}
+                            </div>
+                        {% else %}
+                            <div style="display: flex; align-items: center; gap: 0.75rem; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.35); padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 0.75rem; color: #818cf8; font-size: 0.9rem; font-weight: 500;">
+                                <span style="font-size: 1.1rem;">ℹ️</span> {{ message }}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer style="margin-top: auto; padding: 4rem 5% 2rem; border-top: 1px solid var(--glass-border); text-align: center; color: var(--text-secondary);">
+        <p>&copy; 2024 JetPulse Airline Management. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+        
+        // Intelligent City Autocomplete: Only show suggestions after typing starts
+        document.addEventListener('DOMContentLoaded', () => {
+            const cityInputs = document.querySelectorAll('input[list="city-suggestions"]');
+            cityInputs.forEach(input => {
+                // Store the list ID and remove it initially
+                input.removeAttribute('list');
+                
+                input.addEventListener('input', function() {
+                    if (this.value.trim().length >= 1) {
+                        this.setAttribute('list', 'city-suggestions');
+                    } else {
+                        this.removeAttribute('list');
+                    }
+                });
+
+                // Clear list on focus to prevent showing all on click
+                input.addEventListener('focus', function() {
+                    if (this.value.trim().length === 0) {
+                        this.removeAttribute('list');
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Global Datalist for City Suggestions -->
+    <datalist id="city-suggestions">
+        <option value="Mumbai">
+        <option value="Delhi">
+        <option value="Bangalore">
+        <option value="Hyderabad">
+        <option value="Ahmedabad">
+        <option value="Chennai">
+        <option value="Kolkata">
+        <option value="Surat">
+        <option value="Pune">
+        <option value="Jaipur">
+        <option value="Lucknow">
+        <option value="Kanpur">
+        <option value="Nagpur">
+        <option value="Indore">
+        <option value="Thane">
+        <option value="Bhopal">
+        <option value="Visakhapatnam">
+        <option value="Patna">
+        <option value="Vadodara">
+        <option value="Ghaziabad">
+        <option value="Ludhiana">
+        <option value="Agra">
+        <option value="Nashik">
+        <option value="Faridabad">
+        <option value="Meerut">
+        <option value="Rajkot">
+        <option value="Varanasi">
+        <option value="Srinagar">
+        <option value="Aurangabad">
+        <option value="Dhanbad">
+        <option value="Amritsar">
+        <option value="Navi Mumbai">
+        <option value="Prayagraj">
+        <option value="Howrah">
+        <option value="Ranchi">
+        <option value="Gwalior">
+        <option value="Jabalpur">
+        <option value="Coimbatore">
+        <option value="Vijayawada">
+        <option value="Jodhpur">
+        <option value="Madurai">
+        <option value="Raipur">
+        <option value="Kota">
+        <option value="Chandigarh">
+        <option value="Guwahati">
+        <option value="Solapur">
+        <option value="Hubballi">
+        <option value="Tiruchirappalli">
+        <option value="Bareilly">
+    </datalist>
+</body>
+</html>

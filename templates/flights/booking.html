@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}Book Flight {{ flight.flight_number }} — JetPulse{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<style>
+.booking-wrapper { max-width: 950px; margin: 3rem auto; padding: 0 1.5rem 5rem; }
+.flight-banner { background: linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(236,72,153,0.1) 100%); border: 1px solid rgba(99,102,241,0.2); border-radius: 20px; padding: 2rem; margin-bottom: 2rem; }
+.route-display { display: flex; align-items: center; gap: 1.5rem; margin: 1.5rem 0; }
+.city-block .city-code { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+.city-block .city-name { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; margin-top: 0.25rem; }
+
+.section-card { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 20px; padding: 2rem; margin-bottom: 1.5rem; }
+.section-title { font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+.section-title::after { content: ''; flex: 1; height: 1px; background: var(--glass-border); }
+
+/* SEAT MAP REDESIGN - PREMIUM CABIN THEME */
+.seat-map-container {
+    display: flex;
+    gap: 4rem;
+    margin-top: 2rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 3rem;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fuselage-wrapper {
+    flex: 1;
+    position: relative;
+    padding: 2rem 0;
+}
+
+/* Curved Plane Interior */
+.plane-interior {
+    background: rgba(255, 255, 255, 0.01);
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-radius: 80px 80px 40px 40px; /* Window-like curves */
+    padding: 4rem 2rem;
+    max-height: 550px;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+}
+
+/* Slick Custom Scrollbar */
+.plane-interior::-webkit-scrollbar { width: 4px; }
+.plane-interior::-webkit-scrollbar-track { background: transparent; }
+.plane-interior::-webkit-scrollbar-thumb { 
+    background: linear-gradient(to bottom, var(--primary), transparent); 
+    border-radius: 10px; 
+}
+
+.seat-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+    align-items: center;
+}
+
+.row-num { 
+    font-size: 0.7rem; 
+    color: rgba(255, 255, 255, 0.3); 
+    font-weight: 800; 
+    width: 30px; 
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* Interactive Seat UI */
+.seat {
+    width: 36px;
+    height: 42px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 900;
+    color: transparent;
+    user-select: none;
+    position: relative;
+}
+
+/* Subtle cushion effect */
+.seat::before {
+    content: '';
+    position: absolute;
+    top: 4px; left: 4px; right: 4px; bottom: 8px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.seat:hover:not(.taken) {
+    transform: translateY(-3px) scale(1.05);
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.15);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    color: white;
+}
+
+.seat.selected {
+    background: var(--primary) !important;
+    border-color: #818cf8 !important;
+    color: white !important;
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.6), inset 0 0 10px rgba(255,255,255,0.2);
+    transform: scale(1.1);
+}
+
+.seat.taken {
+    background: rgba(255, 255, 255, 0.01) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    cursor: not-allowed;
+    opacity: 0.2;
+}
+.seat.taken::after {
+    content: '';
+    width: 4px; height: 4px;
+    background: #ef4444; border-radius: 50%;
+}
+
+/* Class Specific Colors */
+.seat.first-class { border-color: rgba(251, 191, 36, 0.2); }
+.seat.first-class:hover { border-color: #fbbf24; }
+
+.seat.business-class { border-color: rgba(167, 139, 250, 0.2); }
+.seat.business-class:hover { border-color: #a78bfa; }
+
+/* Control Panel */
+.seat-legend {
+    width: 280px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.legend-item { display: flex; align-items: center; gap: 0.75rem; font-size: 0.8rem; font-weight: 500;}
+.leg-box { width: 20px; height: 20px; border-radius: 6px; }
+
+.selection-summary {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px dashed rgba(99, 102, 241, 0.3);
+    border-radius: 16px;
+    padding: 1.25rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.price-summary {
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.1);
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+}
+
+.confirm-btn {
+    width: 100%; padding: 1.25rem; font-size: 1.1rem; font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), #818cf8);
+    border: none; border-radius: 16px; color: white; cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    margin-top: 1rem;
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+}
+.confirm-btn:hover:not(:disabled) { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4); }
+
+.aisle { width: 35px; }
+
+/* Dashboard Inputs */
+.passenger-grid input {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 1rem;
+    border-radius: 12px;
+    color: white;
+    transition: all 0.3s ease;
+}
+.passenger-grid input:focus {
+    border-color: var(--primary);
+    background: rgba(0,0,0,0.5);
+    outline: none;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="booking-wrapper">
+    <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Select Your <span style="background: linear-gradient(to right, #6366f1, #ec4899); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Perfect Seat</span></h1>
+        <p style="color: var(--text-secondary);">First, choose where you want to sit on Flight {{ flight.flight_number }}.</p>
+    </div>
+
+    <!-- Flight Banner -->
+    <div class="flight-banner">
+        <div class="route-display">
+            <div class="city-block">
+                <div class="city-code">{{ flight.source[:3].upper() }}</div>
+                <div class="city-name">{{ flight.source }}</div>
+            </div>
+            <div style="flex: 1; text-align: center; opacity: 0.2;"><i data-lucide="plane" style="width: 32px; height: 32px;"></i></div>
+            <div class="city-block" style="text-align: right;">
+                <div class="city-code">{{ flight.destination[:3].upper() }}</div>
+                <div class="city-name">{{ flight.destination }}</div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST" id="bookingForm">
+        <input type="hidden" name="selected_seat" id="selectedSeatInput">
+        <input type="hidden" name="seat_class" id="selectedClassInput" value="Economy">
+
+        <div class="section-card">
+            <div class="section-title"><i data-lucide="armchair" style="height: 14px; width: 14px;"></i> Interactive Seat Map</div>
+            
+            <div class="seat-map-container">
+                <!-- Visual Map with Fuselage curves -->
+                <div class="fuselage-wrapper">
+                    <div class="plane-interior" id="seatMapLayout">
+                        <!-- Rows generated by JS -->
+                    </div>
+                </div>
+
+                <!-- Control Panel -->
+                <div class="seat-legend">
+                    <div>
+                        <div style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800; margin-bottom: 1rem;">Seating Legend</div>
+                        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                            <div class="legend-item"><div class="leg-box first-class" style="background: rgba(251,191,36,0.3); border: 2px solid #fbbf24;"></div> <span>First Class (👑)</span></div>
+                            <div class="legend-item"><div class="leg-box business-class" style="background: rgba(167,139,250,0.3); border: 2px solid #a78bfa;"></div> <span>Business Class (💺)</span></div>
+                            <div class="legend-item"><div class="leg-box" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);"></div> <span>Economy (🪑)</span></div>
+                            <div class="legend-item"><div class="leg-box" style="display: flex; align-items: center; justify-content: center;"><div style="width:4px; height:4px; background:#ef4444; border-radius:50%;"></div></div> <span style="opacity:0.5;">Occupied</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="selection-summary" id="selectionDisplay">
+                        <div style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: 1px;">Selected Seat</div>
+                        <div id="noSelectionMsg" style="color: var(--text-secondary); font-size: 0.8rem; margin: 1rem 0;">No seat selected</div>
+                        <div id="selectionInfo" style="display: none;">
+                            <div style="font-size: 2.2rem; font-weight: 900; color: white;" id="selectedSeatLabel">—</div>
+                            <div id="selectedClassLabel" style="font-size: 0.8rem; font-weight: 800; color: var(--primary); text-transform: uppercase;">Economy</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: auto;">
+                        <label style="font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800;">Meal Preference</label>
+                        <select name="meal_pref" class="form-control" style="margin-top: 0.5rem; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: white; width: 100%; border-radius: 12px; font-weight: 600;">
+                            <option value="Standard">Standard</option>
+                            <option value="Vegetarian">Vegetarian (+₹350)</option>
+                            <option value="Vegan">Vegan (+₹550)</option>
+                            <option value="Halal">Halal (+₹400)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-card">
+            <div class="section-title"><i data-lucide="user" style="height: 14px; width: 14px;"></i> Passenger Details</div>
+            <div class="passenger-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label style="font-size: 0.65rem; color: var(--text-secondary); padding-left: 0.5rem;">FULL NAME</label>
+                    <input type="text" name="passenger_name" placeholder="John Doe" required>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label style="font-size: 0.65rem; color: var(--text-secondary); padding-left: 0.5rem;">EMAIL ADDRESS</label>
+                    <input type="email" name="passenger_email" placeholder="john@example.com" required>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label style="font-size: 0.65rem; color: var(--text-secondary); padding-left: 0.5rem;">PASSPORT NUMBER</label>
+                    <input type="text" name="passenger_passport" placeholder="X1234567" required>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                    <label style="font-size: 0.65rem; color: var(--text-secondary); padding-left: 0.5rem;">PHONE NUMBER</label>
+                    <input type="tel" name="passenger_phone" placeholder="+91 99999 99999" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-summary">
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-secondary); font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Estimated Total Fare</div>
+                <div id="breakdownText" style="font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: 500; margin-top: 0.25rem;">Select your seat to calculate</div>
+            </div>
+            <div class="price-value" id="priceDisplay">₹0</div>
+        </div>
+
+        <button type="submit" class="confirm-btn" id="confirmBtn" disabled>
+            Select a Seat to Continue
+        </button>
+    </form>
+</div>
+
+<script>
+const occupiedSeats = {{ occupied_seats|tojson|safe }};
+const basePrice = {{ flight.price }};
+
+const classPrices = {
+    'First Class': basePrice * 5,
+    'Business': basePrice * 2.5,
+    'Economy': basePrice
+};
+
+const mealSurcharges = {
+    'Standard': 0, 'Vegetarian': 350, 'Vegan': 550, 'Halal': 400
+};
+
+function generateMap() {
+    const container = document.getElementById('seatMapLayout');
+    
+    // First Class (Rows 1-3, 2 seats per row)
+    for(let r=1; r<=3; r++){
+        const row = document.createElement('div');
+        row.className = 'seat-row';
+        row.innerHTML = `<div class="row-num">${r}</div>`;
+        ['A', 'B'].forEach(col => {
+            const sid = `${r}${col}`;
+            const s = createSeatElement(sid, 'first-class');
+            row.appendChild(s);
+        });
+        container.appendChild(row);
+    }
+
+    // Business Class (Rows 4-8, 4 seats per row)
+    for(let r=4; r<=8; r++){
+        const row = document.createElement('div');
+        row.className = 'seat-row';
+        row.innerHTML = `<div class="row-num">${r}</div>`;
+        ['A', 'B', 'C', 'D'].forEach((col, idx) => {
+            if(idx === 2) row.appendChild(createAisle());
+            const sid = `${r}${col}`;
+            const s = createSeatElement(sid, 'business-class');
+            row.appendChild(s);
+        });
+        container.appendChild(row);
+    }
+
+    // Aisle Break
+    const divider = document.createElement('div');
+    divider.style.height = '40px';
+    divider.style.display = 'flex';
+    divider.style.alignItems = 'center';
+    divider.style.justifyContent = 'center';
+    divider.innerHTML = '<hr style="width: 50%; opacity: 0.1;">';
+    container.appendChild(divider);
+
+    // Economy Class (Rows 10-30, 6 seats per row)
+    for(let r=10; r<=30; r++){
+        const row = document.createElement('div');
+        row.className = 'seat-row';
+        row.innerHTML = `<div class="row-num">${r}</div>`;
+        ['A', 'B', 'C', 'D', 'E', 'F'].forEach((col, idx) => {
+            if(idx === 3) row.appendChild(createAisle());
+            const sid = `${r}${col}`;
+            const s = createSeatElement(sid, 'economy-class');
+            row.appendChild(s);
+        });
+        container.appendChild(row);
+    }
+}
+
+function createSeatElement(sid, cls) {
+    const s = document.createElement('div');
+    s.className = `seat ${cls}`;
+    if (occupiedSeats.includes(sid)) s.classList.add('taken');
+    s.textContent = sid;
+    s.dataset.sid = sid;
+    s.dataset.class = cls === 'first-class' ? 'First Class' : (cls === 'business-class' ? 'Business' : 'Economy');
+    
+    s.onclick = () => {
+        if(s.classList.contains('taken')) return;
+        
+        document.querySelectorAll('.seat.selected').forEach(el => el.classList.remove('selected'));
+        s.classList.add('selected');
+        
+        selectSeat(sid, s.dataset.class);
+    };
+    return s;
+}
+
+function createAisle() {
+    const a = document.createElement('div');
+    a.className = 'aisle';
+    return a;
+}
+
+function selectSeat(sid, sclass) {
+    document.getElementById('selectedSeatInput').value = sid;
+    document.getElementById('selectedClassInput').value = sclass;
+    
+    document.getElementById('noSelectionMsg').style.display = 'none';
+    document.getElementById('selectionInfo').style.display = 'block';
+    document.getElementById('selectedSeatLabel').textContent = sid;
+    document.getElementById('selectedClassLabel').textContent = sclass;
+    
+    const confirmBtn = document.getElementById('confirmBtn');
+    confirmBtn.disabled = false;
+    confirmBtn.innerHTML = `Confirm Seat ${sid} & Continue`;
+    
+    updatePriceDisplay();
+}
+
+function updatePriceDisplay() {
+    const sclass = document.getElementById('selectedClassInput').value;
+    const meal = document.querySelector('select[name="meal_pref"]').value;
+    
+    const bp = classPrices[sclass];
+    const mp = (sclass === 'First Class') ? 0 : mealSurcharges[meal];
+    const total = bp + mp;
+    
+    document.getElementById('priceDisplay').textContent = `₹${total.toLocaleString('en-IN')}`;
+    document.getElementById('breakdownText').textContent = `${sclass} Base: ₹${bp.toLocaleString()} + Meal: ₹${mp}`;
+}
+
+document.querySelector('select[name="meal_pref"]').addEventListener('change', updatePriceDisplay);
+
+generateMap();
+</script>
+{% endblock %}

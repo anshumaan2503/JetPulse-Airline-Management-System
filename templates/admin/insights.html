@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Flight Analytics — JetPulse Admin{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.insights-wrapper { padding: 4rem 5%; }
+.chart-container {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 2rem;
+    position: relative;
+}
+.stat-card {
+    background: rgba(99,102,241,0.05);
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="insights-wrapper">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem;">
+        <div>
+            <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Flight <span style="background: linear-gradient(to right, #6366f1, #ec4899); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Insights</span></h1>
+            <p style="color: var(--text-secondary);">Real-time performance metrics and revenue analytics.</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+            <i data-lucide="arrow-left" style="height: 18px; width: 18px; margin-right: 0.5rem;"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Top Summary Stats -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 3rem;">
+        <div class="stat-card">
+            <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Avg Occupancy</div>
+            <div style="font-size: 2rem; font-weight: 800; color: #10b981;">{{ avg_occupancy }}%</div>
+        </div>
+        <div class="stat-card">
+            <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Top Route</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: white;">{{ route_labels[0] if route_labels else 'N/A' }}</div>
+        </div>
+        <div class="stat-card">
+            <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Monthly Trend</div>
+            <div style="font-size: 1.4rem; font-weight: 800; color: #3b82f6;">+12.4%</div>
+        </div>
+        <div class="stat-card">
+            <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">Active Aircraft</div>
+            <div style="font-size: 2rem; font-weight: 800; color: #ec4899;">8</div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+        <!-- Monthly Revenue Chart -->
+        <div class="chart-container">
+            <h3 style="margin-bottom: 1.5rem; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i data-lucide="trending-up" style="color: #10b981; width: 18px;"></i> Revenue Trends (2026)
+            </h3>
+            <canvas id="revenueChart" style="max-height: 350px;"></canvas>
+        </div>
+
+        <!-- Occupancy Gauge -->
+        <div class="chart-container" style="text-align: center; display: flex; flex-direction: column; justify-content: center;">
+            <h3 style="margin-bottom: 2rem; font-size: 1rem;">Average Fleet Occupancy</h3>
+            <canvas id="occupancyChart"></canvas>
+            <div style="margin-top: 2rem;">
+                <p style="font-size: 0.8rem; color: var(--text-secondary);">Target: 85.0%</p>
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; margin-top: 0.5rem;">
+                    <div style="width: {{ avg_occupancy }}%; height: 100%; background: linear-gradient(to right, #6366f1, #ec4899);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Routes Bar Chart -->
+    <div class="chart-container">
+        <h3 style="margin-bottom: 1.5rem; font-size: 1rem;">Top 5 Routes by Revenue</h3>
+        <canvas id="routesChart" style="max-height: 300px;"></canvas>
+    </div>
+</div>
+
+<script>
+// Configure Chart.js Defaults
+Chart.defaults.color = 'rgba(255, 255, 255, 0.6)';
+Chart.defaults.font.family = "'Inter', sans-serif";
+
+// 1. Revenue Line Chart
+const revCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revCtx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [{
+            label: 'Earnings (₹)',
+            data: {{ rev_data|tojson }},
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#fff',
+            pointRadius: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, border: { display: false } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// 2. Top Routes Bar Chart
+const routeCtx = document.getElementById('routesChart').getContext('2d');
+new Chart(routeCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ route_labels|tojson }},
+        datasets: [{
+            label: 'Total Revenue',
+            data: {{ route_values|tojson }},
+            backgroundColor: 'rgba(236, 72, 153, 0.6)',
+            borderRadius: 8,
+            barThickness: 40
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, border: { display: false } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// 3. Occupancy Doughnut
+const occCtx = document.getElementById('occupancyChart').getContext('2d');
+new Chart(occCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Occupied', 'Empty'],
+        datasets: [{
+            data: [{{ avg_occupancy }}, {{ 100 - avg_occupancy }}],
+            backgroundColor: ['#10b981', 'rgba(255,255,255,0.05)'],
+            borderWidth: 0,
+            cutout: '80%'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } }
+    }
+});
+</script>
+{% endblock %}

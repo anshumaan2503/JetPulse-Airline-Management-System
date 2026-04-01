@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard — JetPulse{% endblock %}
+
+{% block extra_css %}
+<style>
+.csv-drop-zone {
+    border: 2px dashed rgba(99,102,241,0.35);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: rgba(99,102,241,0.03);
+    position: relative;
+}
+.csv-drop-zone:hover, .csv-drop-zone.drag-over {
+    border-color: var(--primary);
+    background: rgba(99,102,241,0.08);
+}
+.csv-drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+.csv-filename {
+    font-size: 0.8rem;
+    color: #10b981;
+    margin-top: 0.5rem;
+    font-weight: 600;
+    display: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 4rem 5%;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+        <div>
+            <h1>Admin Dashboard</h1>
+            <p style="color: var(--text-secondary);">Welcome back, @{{ current_user.username }}</p>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+            <a href="{{ url_for('admin.insights') }}" class="btn btn-secondary" style="background: rgba(99,102,241,0.1); color: var(--primary); border: 1px solid rgba(99,102,241,0.2);">
+                <i data-lucide="bar-chart-3" style="margin-right: 0.5rem; height: 18px; width: 18px;"></i> View Analytics
+            </a>
+            <a href="{{ url_for('admin.manage_bookings') }}" class="btn btn-secondary">
+                <i data-lucide="ticket" style="margin-right: 0.5rem; height: 18px; width: 18px;"></i> View All Bookings
+            </a>
+            <a href="{{ url_for('admin.add_flight') }}" class="btn btn-primary">
+                <i data-lucide="plus" style="margin-right: 0.5rem; height: 18px; width: 18px;"></i> Create Flight
+            </a>
+            <a href="{{ url_for('admin.add_aircraft') }}" class="btn btn-secondary">
+                <i data-lucide="plane" style="margin-right: 0.5rem; height: 18px; width: 18px;"></i> Manage Fleet
+            </a>
+            <a href="{{ url_for('admin.assign_crew') }}" class="btn btn-secondary">
+                <i data-lucide="users" style="margin-right: 0.5rem; height: 18px; width: 18px;"></i> Assign Crew
+            </a>
+            <form action="{{ url_for('admin.seed_db') }}" method="POST" style="display: inline;">
+                <button type="submit" class="btn btn-secondary" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">
+                    <i data-lucide="database" style="margin-right: 0.5rem; height: 18px; width: 18px;"></i> Seed Data
+                </button>
+            </form>
+            <button type="button" onclick="document.getElementById('unseedModal').style.display='flex'"
+                class="btn btn-secondary" style="background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.2);">
+                <i data-lucide="trash-2" style="margin-right: 0.5rem; height: 18px; width: 18px;"></i> Clear Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Unseed Confirm Modal -->
+    <div id="unseedModal" style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px);">
+        <div class="card glass" style="max-width:420px; width:90%; padding:2.5rem; border:1px solid rgba(239,68,68,0.3); animation: slideUp 0.3s ease;">
+            <div style="width:56px; height:56px; background:rgba(239,68,68,0.15); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1.5rem;">
+                <i data-lucide="alert-triangle" style="color:#ef4444; width:28px; height:28px;"></i>
+            </div>
+            <h3 style="text-align:center; margin-bottom:0.75rem; font-size:1.3rem;">Clear All Flight Data?</h3>
+            <p style="text-align:center; color:var(--text-secondary); font-size:0.9rem; margin-bottom:2rem;">
+                This will permanently delete all <strong>flights, aircraft, bookings, passengers</strong> and crew assignments.<br>
+                <span style="color:#10b981; font-size:0.8rem; margin-top:0.5rem; display:block;">✓ User accounts &amp; admin login will be preserved.</span>
+            </p>
+            <div style="display:flex; gap:1rem;">
+                <button onclick="document.getElementById('unseedModal').style.display='none'"
+                    class="btn btn-secondary" style="flex:1;">
+                    Cancel
+                </button>
+                <form action="{{ url_for('admin.unseed_db') }}" method="POST" style="flex:1;">
+                    <button type="submit" class="btn btn-primary" style="width:100%; background:linear-gradient(135deg,#ef4444,#dc2626); border:none;">
+                        <i data-lucide="trash-2" style="height:16px; width:16px;"></i> Yes, Clear All
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- CSV Import Panel -->
+    <div class="card glass" style="padding: 2rem; margin-bottom: 3rem; border: 1px solid rgba(99,102,241,0.2); background: linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(236,72,153,0.03) 100%);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 42px; height: 42px; background: rgba(99,102,241,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="file-spreadsheet" style="color: var(--primary); width: 20px; height: 20px;"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem;">Bulk Import Flights via CSV</h3>
+                    <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary);">Upload a CSV file to add multiple flights at once. Duplicates are automatically skipped.</p>
+                </div>
+            </div>
+            <a href="{{ url_for('admin.download_csv_template') }}" class="btn btn-secondary" style="flex-shrink: 0; font-size: 0.85rem; gap: 0.5rem; display: flex; align-items: center;">
+                <i data-lucide="download" style="height: 16px; width: 16px;"></i> Download Template
+            </a>
+        </div>
+
+        <form action="{{ url_for('admin.upload_flights_csv') }}" method="POST" enctype="multipart/form-data" id="csvUploadForm">
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: start;">
+                <div>
+                    <div class="csv-drop-zone" id="dropZone">
+                        <input type="file" name="csv_file" id="csvFileInput" accept=".csv" required>
+                        <i data-lucide="upload-cloud" style="width: 32px; height: 32px; color: var(--primary); opacity: 0.6; margin-bottom: 0.75rem;"></i>
+                        <p style="margin: 0; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">Click to browse or drag & drop your CSV file</p>
+                        <p style="margin: 0.4rem 0 0; font-size: 0.75rem; color: var(--text-secondary); opacity: 0.6;">Required columns: flight_number, source, destination, departure_time, arrival_time, price, aircraft_model, aircraft_registration, aircraft_capacity</p>
+                    </div>
+                    <div class="csv-filename" id="csvFilename">📄 <span id="csvFilenameTxt"></span></div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="height: 52px; padding: 0 1.5rem; white-space: nowrap; align-self: center;">
+                    <i data-lucide="upload" style="height: 18px; width: 18px;"></i> Import Flights
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- JetPulse System Controls -->
+    <div class="card glass" style="margin-bottom: 3rem; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.02);">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 48px; height: 48px; background: rgba(16, 185, 129, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="shield-check" style="color: #10b981;"></i>
+            </div>
+            <div>
+                <h3 style="margin:0; font-size: 1.1rem;">Payment Gateway (Test Mode)</h3>
+                <p style="margin:0; font-size: 0.8rem; color: var(--text-secondary);">
+                    Current Status: 
+                    <span style="color: {{ '#10b981' if payment_enabled == 'true' else '#ef4444' }}; font-weight: 700;">
+                        {{ "ACTIVE" if payment_enabled == 'true' else "DISABLED (Simulated Mode)" }}
+                    </span>
+                </p>
+            </div>
+        </div>
+        <form action="{{ url_for('admin.toggle_payment') }}" method="POST">
+             <button type="submit" class="btn" style="background: {{ '#ef4444' if payment_enabled == 'true' else '#10b981' }}; color: white; padding: 0.6rem 1.5rem; border-radius: 10px; font-weight: 600; border: none; cursor: pointer;">
+                Turn {{ "OFF" if payment_enabled == 'true' else "ON" }}
+             </button>
+        </form>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid" style="padding: 0; margin-bottom: 4rem;">
+
+        <div class="card glass">
+            <h3 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Total Revenue</h3>
+            <span style="font-size: 2rem; font-weight: 800; color: #10b981;">₹{{ total_revenue }}</span>
+        </div>
+        <div class="card glass">
+            <h3 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Total Bookings</h3>
+            <span style="font-size: 2rem; font-weight: 800;">{{ total_bookings }}</span>
+        </div>
+        <div class="card glass">
+            <h3 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Active Flights</h3>
+            <span style="font-size: 2rem; font-weight: 800;">{{ total_flights }}</span>
+        </div>
+        <div class="card glass">
+            <h3 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem;">Total Users</h3>
+            <span style="font-size: 2rem; font-weight: 800;">{{ total_users }}</span>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Flight Status Management -->
+        <div class="card glass" style="padding: 1.5rem;">
+            <h2 style="margin-bottom: 1.5rem;">Flight Status Management</h2>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead style="border-bottom: 1px solid var(--glass-border);">
+                        <tr>
+                            <th style="padding: 1rem;">Flight</th>
+                            <th style="padding: 1rem;">Route</th>
+                            <th style="padding: 1rem;">Status</th>
+                            <th style="padding: 1rem;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if flights %}
+                            {% for flight in flights %}
+                            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                <td style="padding: 1rem;">{{ flight.flight_number }}</td>
+                                <td style="padding: 1rem;">{{ flight.source }} → {{ flight.destination }}</td>
+                                <td style="padding: 1rem;">
+                                    <span style="padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.8rem; background: {% if flight.status == 'scheduled' %}#3b82f6{% elif flight.status == 'delayed' %}#f59e0b{% elif flight.status == 'cancelled' %}#ef4444{% else %}#10b981{% endif %}; color: white;">
+                                        {{ flight.status.title() }}
+                                    </span>
+                                </td>
+                                <td style="padding: 1rem;">
+                                    <form action="{{ url_for('admin.update_flight_status', flight_id=flight.id) }}" method="POST" style="display: flex; gap: 0.5rem;">
+                                        <select name="status" style="padding: 0.3rem; border-radius: 8px; font-size: 0.8rem; width: auto;">
+                                            <option value="scheduled" {% if flight.status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                                            <option value="delayed" {% if flight.status == 'delayed' %}selected{% endif %}>Delayed</option>
+                                            <option value="cancelled" {% if flight.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                            <option value="completed" {% if flight.status == 'completed' %}selected{% endif %}>Completed</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">Update</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="4" style="padding: 2rem; text-align: center;">No flights found.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Bookings -->
+        <div class="card glass" style="padding: 1.5rem;">
+            <h2 style="margin-bottom: 1.5rem;">Recent Bookings</h2>
+            {% if recent_bookings %}
+                {% for booking in recent_bookings %}
+                <div style="padding: 1rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="font-weight: 600; margin: 0;">{{ booking.passenger.name }}</p>
+                        <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">{{ booking.flight.flight_number }} | Ref: {{ booking.booking_reference }}</p>
+                    </div>
+                    <span style="color: #10b981; font-weight: 700;">₹{{ booking.flight.price }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-secondary); text-align: center;">No recent bookings.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+const fileInput = document.getElementById('csvFileInput');
+const dropZone = document.getElementById('dropZone');
+const filenameEl = document.getElementById('csvFilename');
+const filenameTxt = document.getElementById('csvFilenameTxt');
+
+if (fileInput) {
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+            filenameTxt.textContent = fileInput.files[0].name;
+            filenameEl.style.display = 'block';
+        }
+    });
+}
+
+if (dropZone) {
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', e => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            filenameTxt.textContent = e.dataTransfer.files[0].name;
+            filenameEl.style.display = 'block';
+        }
+    });
+}
+</script>
+{% endblock %}

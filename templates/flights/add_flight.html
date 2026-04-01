@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-container glass" style="max-width: 600px;">
+    <h2 style="margin-bottom: 2rem; text-align: center;">New Flight</h2>
+    <form method="POST">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label>Flight Number</label>
+                <input type="text" name="flight_number" placeholder="e.g., JP101" required>
+            </div>
+            <div class="form-group">
+                <label>Select Aircraft</label>
+                <select name="aircraft_id" required>
+                    {% for aircraft in aircrafts %}
+                        <option value="{{ aircraft.id }}">{{ aircraft.model }} - {{ aircraft.registration_number }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label>Source</label>
+                <input type="text" name="source" list="city-suggestions" placeholder="Origin City" required>
+            </div>
+            <div class="form-group">
+                <label>Destination</label>
+                <input type="text" name="destination" list="city-suggestions" placeholder="Destination City" required>
+            </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label>Departure Time</label>
+                <input type="datetime-local" name="departure_time" required>
+            </div>
+            <div class="form-group">
+                <label>Arrival Time</label>
+                <input type="datetime-local" name="arrival_time" required>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label>Ticket Price (₹)</label>
+            <input type="number" step="0.01" name="price" placeholder="Enter Price" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Create Flight</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 6rem 10%;">
+    <div style="text-align: center; margin-bottom: 6rem;">
+        <h1 style="font-size: 4rem; margin-bottom: 1.5rem;">System Architecture & <span style="color: var(--primary);">Innovation</span></h1>
+        <p style="color: var(--text-secondary); max-width: 800px; margin: 0 auto; font-size: 1.25rem;">Built with precision, JetPulse represents the pinnacle of modern aviation management. Below is the technical breakdown of our operational ecosystem.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start;">
+        <div>
+            <h2 style="font-size: 2.5rem; margin-bottom: 2rem;">Core Objectives</h2>
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <div class="glass-bright" style="padding: 1.5rem;">
+                    <h3 style="margin-bottom: 0.5rem; color: var(--primary);">01. Automation</h3>
+                    <p style="color: var(--text-secondary);">Reduces human error through automated flight scheduling and ticket booking workflows.</p>
+                </div>
+                <div class="glass-bright" style="padding: 1.5rem;">
+                    <h3 style="margin-bottom: 0.5rem; color: var(--secondary);">02. Real-Time Insights</h3>
+                    <p style="color: var(--text-secondary);">Provides immediate feedback on active flight volumes, revenue shifts, and fleet utilization.</p>
+                </div>
+                <div class="glass-bright" style="padding: 1.5rem;">
+                    <h3 style="margin-bottom: 0.5rem; color: var(--accent);">03. Secure Governance</h3>
+                    <p style="color: var(--text-secondary);">Granular access control ensuring each user (Admin, Staff, or Passenger) receives a tailored operational experience.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass" style="padding: 3rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);">
+            <h2 style="margin-bottom: 1.5rem;">Technical Stack</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 2.5rem;">JetPulse leverages a high-performance Decoupled Three-Tier Architecture, ensuring scalability and responsiveness across all operational levels.</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                <div style="padding: 1rem; border: 1px solid var(--glass-border); border-radius: 12px; background: rgba(0,0,0,0.2);">
+                    <p style="font-weight: 800; margin: 0;">BACKEND</p>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">Flask RESTful API</p>
+                </div>
+                <div style="padding: 1rem; border: 1px solid var(--glass-border); border-radius: 12px; background: rgba(0,0,0,0.2);">
+                    <p style="font-weight: 800; margin: 0;">FRONTEND</p>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">Reactive Jinja Templates</p>
+                </div>
+                <div style="padding: 1rem; border: 1px solid var(--glass-border); border-radius: 12px; background: rgba(0,0,0,0.2);">
+                    <p style="font-weight: 800; margin: 0;">DATABASE</p>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">Scalable Relational DB</p>
+                </div>
+                <div style="padding: 1rem; border: 1px solid var(--glass-border); border-radius: 12px; background: rgba(0,0,0,0.2);">
+                    <p style="font-weight: 800; margin: 0;">SECURITY</p>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary);">JWT & Role Decorators</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--glass-border); text-align: center;">
+                <p style="font-style: italic; color: var(--text-secondary);">"The system provides millisecond precision in organizational decision-making."</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

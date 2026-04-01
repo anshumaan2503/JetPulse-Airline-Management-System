@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="padding: 6rem 10%;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 2rem;">
+        <div>
+            <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">The Flight <span style="color: var(--primary);">Results</span></h1>
+            <p style="color: var(--text-secondary); font-size: 1.1rem;">Displaying elite connections matching your telemetry search.</p>
+        </div>
+        <a href="{{ url_for('main.index') }}" class="btn btn-secondary" style="margin-bottom: 0.5rem;">
+            <i data-lucide="refresh-cw" style="height: 16px; width: 16px;"></i> Refine Search
+        </a>
+    </div>
+
+    <!-- Route Availability Schedule -->
+    <div class="card glass" style="margin-bottom: 3rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, rgba(236, 72, 153, 0.03) 100%);">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="width: 40px; height: 40px; background: rgba(99, 102, 241, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <i data-lucide="calendar" style="color: var(--primary); width: 20px; height: 20px;"></i>
+            </div>
+            <div>
+                <h3 style="margin: 0; font-size: 1rem;">Full Schedule: {{ source }} to {{ destination }}</h3>
+                <p style="margin: 0; font-size: 0.75rem; color: var(--text-secondary);">Select a date below to view available flights on that day.</p>
+            </div>
+        </div>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+            {% if all_available_dates %}
+                {% for date in all_available_dates %}
+                    <form action="{{ url_for('main.search_flights') }}" method="POST" style="display: inline;">
+                        <input type="hidden" name="source" value="{{ source }}">
+                        <input type="hidden" name="destination" value="{{ destination }}">
+                        <input type="hidden" name="travel_date" value="{{ date }}">
+                        <input type="hidden" name="status" value="any">
+                        <button type="submit" class="btn btn-secondary" 
+                                style="padding: 0.5rem 1rem; font-size: 0.85rem; border: 1px solid {% if date == travel_date %}var(--primary){% else %}var(--glass-border){% endif %}; background: {% if date == travel_date %}rgba(99, 102, 241, 0.1){% else %}transparent{% endif %}; min-width: 120px;">
+                            {{ date }}
+                        </button>
+                    </form>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--text-secondary); font-size: 0.85rem;">No other dates found for this route.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid">
+        {% if flights %}
+            {% for flight in flights %}
+                <div class="card glass fade-in" style="animation-delay: {{ loop.index * 0.1 }}s; position: relative; overflow: hidden;">
+                    <!-- Price Tag -->
+                    <div style="position: absolute; top: 0; right: 0; padding: 0.75rem 1.5rem; background: var(--secondary); color: white; font-weight: 800; border-bottom-left-radius: 20px; font-size: 1.2rem; box-shadow: -5px 5px 15px rgba(236, 72, 153, 0.3);">
+                        <div style="font-size: 0.55rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; margin-bottom: 1px;">From</div>
+                        ₹{{ "{:,.0f}".format(dynamic_prices[flight.id]) }}
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                        <span style="font-size: 0.75rem; background: rgba(99, 102, 241, 0.1); color: var(--primary); padding: 0.4rem 0.8rem; border-radius: 10px; border: 1px solid rgba(99, 102, 241, 0.2); font-weight: 700;">{{ flight.flight_number }}</span>
+                        <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px;">{{ flight.aircraft.model }}</span>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 2.5rem;">
+                        <div style="flex: 1;">
+                            <p style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.25rem;">Departs</p>
+                            <h3 style="margin: 0; font-size: 1.6rem;">{{ flight.source }}</h3>
+                        </div>
+                        <div style="color: var(--primary); opacity: 0.3; transform: rotate(45deg);">
+                            <i data-lucide="plane" style="width: 28px; height: 28px;"></i>
+                        </div>
+                        <div style="flex: 1; text-align: right;">
+                            <p style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.25rem;">Arrives</p>
+                            <h3 style="margin: 0; font-size: 1.6rem;">{{ flight.destination }}</h3>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; padding: 1.25rem; background: rgba(255, 255, 255, 0.02); border-radius: 16px; border: 1px solid var(--glass-border);">
+                        <div>
+                            <p style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase;">Departure</p>
+                            <p style="margin: 0; font-weight: 700; font-size: 0.95rem;">{{ flight.departure_time.strftime('%H:%M') }}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p style="font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase;">Status</p>
+                            <span style="color: {% if flight.status == 'scheduled' %}#10b981{% elif flight.status == 'delayed' %}#f59e0b{% else %}#ef4444{% endif %}; font-weight: 800; font-size: 0.85rem;">{{ flight.status.upper() }}</span>
+                        </div>
+                    </div>
+
+                    <a href="{{ url_for('passenger.book_flight', flight_id=flight.id) }}" class="btn btn-primary" style="width: 100%; padding: 1rem;">
+                        <i data-lucide="ticket" style="height: 18px; width: 18px;"></i> Instant Booking
+                    </a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 8rem;" class="card glass">
+                <i data-lucide="search-x" style="width: 64px; height: 64px; color: var(--text-secondary); opacity: 0.15; margin-bottom: 2rem;"></i>
+                <h2 style="margin-bottom: 1rem;">No Flights Found</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 3rem; max-width: 450px; margin-inline: auto;">We couldn't find any flights matching your criteria. Try searching for "Mumbai" or "London" for the best results.</p>
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary">Try New Search</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

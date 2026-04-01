@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<!-- Flatpickr Modern Date Picker -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+/* ── JetPulse dark Flatpickr theme ─────────────────────── */
+.flatpickr-calendar {
+    background: #13111e !important;
+    border: 1px solid rgba(99,102,241,0.25) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.15) !important;
+    padding: 0.5rem !important;
+    font-family: inherit !important;
+    color: #e2e8f0 !important;
+    overflow: hidden;
+}
+.flatpickr-months { padding: 0.75rem 0.5rem 0 !important; }
+.flatpickr-month {
+    background: transparent !important;
+    color: white !important;
+    height: 42px !important;
+}
+.flatpickr-current-month {
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    padding-top: 0.25rem !important;
+}
+.flatpickr-current-month .numInputWrapper span { border-color: rgba(255,255,255,0.2) !important; }
+.flatpickr-current-month input.cur-year { color: white !important; font-weight: 700 !important; }
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    color: white !important;
+    background: #1e1b4b !important;
+    font-weight: 700;
+    border-radius: 8px;
+}
+.flatpickr-prev-month, .flatpickr-next-month {
+    color: rgba(255,255,255,0.6) !important;
+    fill: rgba(255,255,255,0.6) !important;
+    padding: 8px !important;
+    border-radius: 10px !important;
+    transition: background 0.2s !important;
+}
+.flatpickr-prev-month:hover, .flatpickr-next-month:hover {
+    background: rgba(99,102,241,0.2) !important;
+    color: white !important;
+    fill: white !important;
+}
+.flatpickr-weekdays { background: transparent !important; margin-top: 0.5rem !important; }
+span.flatpickr-weekday {
+    background: transparent !important;
+    color: rgba(99,102,241,0.8) !important;
+    font-weight: 700 !important;
+    font-size: 0.72rem !important;
+    letter-spacing: 1px !important;
+}
+.flatpickr-days { border: none !important; padding: 0.25rem 0 !important; }
+.dayContainer { padding: 0 !important; }
+.flatpickr-day {
+    background: transparent !important;
+    border: none !important;
+    color: #cbd5e1 !important;
+    border-radius: 10px !important;
+    font-size: 0.85rem !important;
+    height: 36px !important;
+    line-height: 36px !important;
+    transition: all 0.15s ease !important;
+}
+.flatpickr-day:hover {
+    background: rgba(99,102,241,0.2) !important;
+    color: white !important;
+    border-radius: 10px !important;
+}
+.flatpickr-day.today {
+    border: 1px solid rgba(99,102,241,0.5) !important;
+    color: #818cf8 !important;
+    font-weight: 700 !important;
+}
+.flatpickr-day.today:hover {
+    background: rgba(99,102,241,0.25) !important;
+    color: white !important;
+}
+.flatpickr-day.selected, .flatpickr-day.selected:hover {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 16px rgba(99,102,241,0.4) !important;
+}
+.flatpickr-day.flatpickr-disabled, .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay {
+    color: rgba(255,255,255,0.15) !important;
+}
+.numInputWrapper:hover { background: transparent !important; }
+.numInput { color: white !important; }
+
+/* The input field itself */
+.datepicker-input-wrap { position: relative; }
+.datepicker-input-wrap .cal-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary);
+    opacity: 0.7;
+    pointer-events: none;
+    width: 16px;
+    height: 16px;
+}
+.datepicker-input-wrap input[type="text"] {
+    padding-left: 2.5rem !important;
+    cursor: pointer;
+}
+
+/* Time picker section */
+.flatpickr-time {
+    background: #13111e !important;
+    border-top: 1px solid rgba(99,102,241,0.15) !important;
+    height: 48px !important;
+    margin-top: 0.5rem !important;
+}
+.flatpickr-time input {
+    background: transparent !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+}
+.flatpickr-time input:hover, .flatpickr-time input:focus {
+    background: rgba(99,102,241,0.15) !important;
+}
+.flatpickr-time .flatpickr-am-pm {
+    background: transparent !important;
+    color: rgba(99,102,241,0.8) !important;
+    font-weight: 700 !important;
+}
+.flatpickr-time .flatpickr-am-pm:hover {
+    background: rgba(99,102,241,0.2) !important;
+    color: white !important;
+}
+.flatpickr-time .numInputWrapper span {
+    border-color: rgba(255,255,255,0.1) !important;
+}
+.flatpickr-time .numInputWrapper span svg path {
+    fill: rgba(255,255,255,0.4) !important;
+}
+.flatpickr-time-separator {
+    color: rgba(99,102,241,0.6) !important;
+    font-weight: 700 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="hero fade-in">
+    <h1>
+        <span>Experience the</span><br>
+        <span style="background: linear-gradient(to right, #6366f1, #a855f7, #ec4899); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Future of Aviation.</span>
+    </h1>
+    <p>Seamless management and elite travel experiences. JetPulse integrates cutting-edge technology to redefine how you navigate the skies.</p>
+    
+    <div style="display: flex; gap: 1.5rem; justify-content: center; margin-bottom: 2rem;">
+        <a href="#search" class="btn btn-primary">
+            <i data-lucide="search" style="height: 18px; width: 18px;"></i> Search Flights
+        </a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">
+            Join the Network <i data-lucide="chevron-right" style="height: 18px; width: 18px;"></i>
+        </a>
+    </div>
+</section>
+
+<!-- Search Section -->
+<div id="search" class="glass fade-in" style="max-width: 1100px; margin: -4rem auto 6rem; padding: 2.5rem; position: relative; z-index: 10;">
+    <h3 style="margin-bottom: 1.5rem; font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 2px;">Find and Track Your Next Flight</h3>
+    <form action="{{ url_for('main.search_flights') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 0.8fr; gap: 1rem; align-items: end;">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.75rem;"><i data-lucide="map-pin" style="height: 12px; width: 12px;"></i> Origin City</label>
+            <input type="text" name="source" list="city-suggestions" placeholder="e.g. Mumbai" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.75rem;"><i data-lucide="navigation" style="height: 12px; width: 12px;"></i> Destination</label>
+            <input type="text" name="destination" list="city-suggestions" placeholder="e.g. Delhi" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.75rem;"><i data-lucide="calendar-clock" style="height: 12px; width: 12px;"></i> Date &amp; Time</label>
+            <div class="datepicker-input-wrap" style="position: relative;">
+                <i data-lucide="calendar" style="position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); pointer-events: none; height: 16px; width: 16px;"></i>
+                <input type="text" id="travelDatePicker" name="travel_date" placeholder="Select Travel Date" autocomplete="off" readonly style="padding-right: 3rem;">
+                <i data-lucide="x" id="clearDateBtn" style="position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%); color: var(--text-secondary); cursor: pointer; height: 16px; width: 16px; display: none;" title="Clear Date"></i>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 0.75rem;"><i data-lucide="activity" style="height: 12px; width: 12px;"></i> Status</label>
+            <select name="status">
+                <option value="any">Any Status</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="delayed">Delayed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="completed">Completed</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="height: 52px; width: 100%;">
+            <i data-lucide="search" style="height: 18px; width: 18px;"></i> Search
+        </button>
+    </form>
+</div>
+
+<!-- Features Section -->
+<div style="padding: 0 8%; margin-bottom: 8rem;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem;">
+        <div class="card glass-bright fade-in" style="animation-delay: 0.2s;">
+            <div style="background: rgba(99, 102, 241, 0.1); width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                <i data-lucide="radio" style="color: var(--primary);"></i>
+            </div>
+            <h3>Real-Time Tracking</h3>
+            <p style="color: var(--text-secondary);">Monitor flight statuses with millisecond precision and live telemetry data.</p>
+        </div>
+        <div class="card glass-bright fade-in" style="animation-delay: 0.4s;">
+            <div style="background: rgba(236, 72, 153, 0.1); width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                <i data-lucide="zap" style="color: var(--secondary);"></i>
+            </div>
+            <h3>Reactive Engine</h3>
+            <p style="color: var(--text-secondary);">Powered by high-performance asynchronous logic for seamless responsiveness.</p>
+        </div>
+        <div class="card glass-bright fade-in" style="animation-delay: 0.6s;">
+            <div style="background: rgba(0, 242, 254, 0.1); width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem;">
+                <i data-lucide="shield" style="color: var(--accent);"></i>
+            </div>
+            <h3>Secure Governance</h3>
+            <p style="color: var(--text-secondary);">JWT-based identity management and role-based access for ultimate security.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Featured Flights -->
+<div style="padding: 0 8%; margin-bottom: 8rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem;">
+        <div>
+            <h2 style="font-size: 2.5rem; margin-bottom: 0.5rem;">Available JetPulse Routes</h2>
+            <p style="color: var(--text-secondary);">Elite flights curated for global connectivity.</p>
+        </div>
+        <a href="#" style="color: var(--primary); text-decoration: none; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+            View All Routes <i data-lucide="arrow-right"></i>
+        </a>
+    </div>
+
+    <div class="grid">
+        {% if flights %}
+            {% for flight in flights %}
+                <div class="card glass fade-in" 
+                     data-flight-date="{{ flight.departure_time.strftime('%Y-%m-%d %H:%M') }}"
+                     style="animation-delay: {{ loop.index * 0.1 }}s; position: relative; overflow: hidden;">
+                    <!-- Status Badge -->
+                    <div style="position: absolute; top: 0; right: 0; padding: 0.5rem 1rem; background: rgba(16, 185, 129, 0.1); color: #10b981; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; border-bottom-left-radius: 12px;">
+                        {{ flight.status }}
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <span style="font-size: 0.8rem; background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); padding: 0.4rem 0.8rem; border-radius: 10px; border: 1px solid var(--glass-border);">{{ flight.flight_number }}</span>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 2px;">From</div>
+                            <span style="font-weight: 800; color: var(--secondary); font-size: 1.4rem;">₹{{ "{:,.0f}".format(dynamic_prices[flight.id]) }}</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem;">
+                        <div style="flex: 1;">
+                            <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 0.25rem;">Departs</p>
+                            <h3 style="margin: 0; font-size: 1.5rem;">{{ flight.source }}</h3>
+                        </div>
+                        <div style="color: var(--primary); opacity: 0.5;">
+                            <i data-lucide="plane-takeoff" style="width: 24px; height: 24px;"></i>
+                        </div>
+                        <div style="flex: 1; text-align: right;">
+                            <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 0.25rem;">Arrives</p>
+                            <h3 style="margin: 0; font-size: 1.5rem;">{{ flight.destination }}</h3>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; padding: 1rem; background: rgba(255, 255, 255, 0.02); border-radius: 12px;">
+                        <span style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="clock" style="height: 14px; width: 14px;"></i> {{ flight.departure_time.strftime('%H:%M') }}</span>
+                        <span style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="calendar" style="height: 14px; width: 14px;"></i> {{ flight.departure_time.strftime('%b %d, %Y') }}</span>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem;">
+                        <a href="{{ url_for('passenger.book_flight', flight_id=flight.id) }}" class="btn btn-primary" style="flex: 2;">
+                            Secure Seat
+                        </a>
+                        <button type="button" class="btn btn-secondary card-date-btn" 
+                                data-source="{{ flight.source }}" 
+                                data-dest="{{ flight.destination }}"
+                                style="flex: 1; padding: 0.75rem; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border);">
+                            <i data-lucide="calendar"></i>
+                        </button>
+                    </div>
+                    <!-- Hidden form for card redirects -->
+                    <form action="{{ url_for('main.search_flights') }}" method="POST" style="display: none;" class="card-search-form">
+                        <input type="hidden" name="source" value="{{ flight.source }}">
+                        <input type="hidden" name="destination" value="{{ flight.destination }}">
+                        <input type="hidden" name="travel_date" class="card-travel-date">
+                        <input type="hidden" name="status" value="any">
+                    </form>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 6rem;" class="glass">
+                <i data-lucide="map" style="width: 64px; height: 64px; color: var(--text-secondary); opacity: 0.2; margin-bottom: 1.5rem;"></i>
+                <p style="color: var(--text-secondary); font-size: 1.2rem;">Our skies are currently being mapped. Check back shortly.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div style="padding: 0 8% 8rem;">
+    <div class="glass" style="padding: 6rem; text-align: center; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);">
+        <h2 style="font-size: 3rem; margin-bottom: 1rem;">Ready to Fly Pulse?</h2>
+        <p style="color: var(--text-secondary); font-size: 1.2rem; max-width: 600px; margin: 0 auto 2.5rem;">Join thousands of travelers who have chosen JetPulse for its reliability and premium service.</p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Create Free Account</a>
+            <a href="#" class="btn btn-secondary">Learn More</a>
+        </div>
+    </div>
+</div>
+<!-- Flatpickr JS + Init -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+// Route Card Date Pickers
+document.querySelectorAll('.card-date-btn').forEach(btn => {
+    // Get the initial date from the card for better user experience
+    const initialDate = btn.closest('.card').querySelector('[data-flight-date]')?.dataset.flightDate;
+    
+    flatpickr(btn, {
+        enableTime: true,
+        dateFormat: 'Y-m-d H:i',
+        defaultDate: initialDate,
+        minDate: 'today',
+        minuteIncrement: 15,
+        onChange: function(selectedDates, dateStr) {
+            if (dateStr) {
+                const card = btn.closest('.card');
+                const form = card.querySelector('.card-search-form');
+                form.querySelector('.card-travel-date').value = dateStr;
+                form.submit();
+            }
+        }
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const fp = flatpickr('#travelDatePicker', {
+        enableTime: false,
+        dateFormat: 'Y-m-d',
+        minDate: 'today',
+        disableMobile: true,
+        onChange: function(selectedDates, dateStr, instance) {
+            const clearBtn = document.getElementById('clearDateBtn');
+            clearBtn.style.display = dateStr ? 'block' : 'none';
+        },
+        onReady: function() {
+            if (window.lucide) lucide.createIcons();
+        }
+    });
+
+    document.getElementById('clearDateBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        fp.clear();
+        e.target.style.display = 'none';
+    });
+});
+</script>
+{% endblock %}
