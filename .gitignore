@@ -14,4 +14,8 @@ instance/
 
 # OS
 .DS_Store
-Thumbs.db
+Thum
+                                         bs.db
+
+# Documentation
+Documents/
