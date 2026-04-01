@@ -67,14 +67,6 @@
 
 ---
 
-## 🕹️ Admin Access
-| Role | Username | Password |
-|------|----------|----------|
-| **Administrator** | admin@jetpulse.com | admin123 |
-| **Staff** | staff@jetpulse.com | staff123 |
-
----
-
 ## 🎨 Design Philosophy
 JetPulse adheres to a **"Dark-Premium"** design language, utilizing:
 - **Depth**: Multi-layered glassmorphism for a sophisticated look.
